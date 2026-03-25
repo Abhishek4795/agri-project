@@ -14,6 +14,12 @@ import SoilPredictor from './pages/SoilPredictor';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ApiTestPage from './pages/ApiTestPage';
+import OurProducts from './pages/OurProducts';
+import AboutUs from './pages/AboutUs';
+import Projects from './pages/Projects';
+import Services from './pages/Services';
+import NewsPage from './pages/NewsPage';
+import ContactUs from './pages/ContactUs';
 import Footer from './components/Footer';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
@@ -72,6 +78,12 @@ function App() {
           <Route path="/RegisterPage" element={<RegisterPage />} />
           <Route path="/SoilPredictor" element={<SoilPredictor />} />
           <Route path="/api-test" element={<ApiTestPage />} />
+          <Route path="/our-products" element={<OurProducts />} />
+          <Route path="/aboutus" element={<AboutUs />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/news" element={<NewsPage />} />
+          <Route path="/contactus" element={<ContactUs />} />
           <Route path="/" element={
             <div className="content-container">
               <div className="scroll-reveal">

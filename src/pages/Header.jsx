@@ -41,12 +41,12 @@ const Header = () => {
 
   const menuItems = [
     { name: 'Home', icon: '🏠', path: '/' },
-    { name: 'About Us', icon: 'ℹ️', path: '#aboutus' },
-    { name: 'Our Products', icon: '🌱', path: '#ourproducts' },
-    { name: 'Projects', icon: '📊', path: '#projects' },
-    { name: 'Services', icon: '🔧', path: '#services' },
-    { name: 'News', icon: '📰', path: '#news' },
-    { name: 'Contact Us', icon: '✉️', path: '#contactus' }
+    { name: 'About Us', icon: 'ℹ️', path: '/aboutus' },
+    { name: 'Our Products', icon: '🌱', path: '/our-products' },
+    { name: 'Projects', icon: '📊', path: '/projects' },
+    { name: 'Services', icon: '🔧', path: '/services' },
+    { name: 'News', icon: '📰', path: '/news' },
+    { name: 'Contact Us', icon: '✉️', path: '/contactus' }
   ];
 
   return (
@@ -87,17 +87,19 @@ const Header = () => {
                 onMouseEnter={() => setActiveItem(item.name)}
                 onMouseLeave={() => setActiveItem(null)}
               >
-                <a
-                  href={item.path}
+                <Link 
+                  to={item.path} 
                   className="text-white no-underline text-sm py-2 block hover:text-green-200 transition-all duration-300"
                 >
-                  <span className={`transition-all duration-300 ${activeItem === item.name ? 'transform scale-110 text-green-200 font-medium' : ''
-                    }`}>
+                  <span className={`transition-all duration-300 ${
+                    activeItem === item.name ? 'transform scale-110 text-green-200 font-medium' : ''
+                  }`}>
                     {item.name}
                   </span>
-                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-green-300 transition-all duration-300 ${activeItem === item.name ? 'w-full' : 'w-0'
-                    }`}></span>
-                </a>
+                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-green-300 transition-all duration-300 ${
+                    activeItem === item.name ? 'w-full' : 'w-0'
+                  }`}></span>
+                </Link>
               </li>
             ))}
           </ul>
@@ -130,8 +132,9 @@ const Header = () => {
                 }`}
               style={{ transitionDelay: menuOpen ? `${index * 50}ms` : '0ms' }}
             >
-              <a
-                href={item.path}
+              <Link 
+                to={item.path} 
+                onClick={() => setMenuOpen(false)}
                 className="block py-3 text-white no-underline text-sm hover:text-green-200 transition-all duration-300 flex items-center"
               >
                 <span className="mr-3 text-green-300">{item.icon}</span>
@@ -141,7 +144,7 @@ const Header = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </span>
-              </a>
+              </Link>
             </li>
           ))}
           <li className="mt-4 px-4 pb-4 space-y-3">
