@@ -13,9 +13,9 @@ const AboutUs = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white pb-24 font-sans text-gray-800">
+    <main className="min-h-screen bg-white pb-24 font-sans text-gray-800">
       {/* Premium Split Hero */}
-      <div className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-6 lg:px-16 overflow-hidden flex items-center min-h-[80vh]">
+      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-6 lg:px-16 overflow-hidden flex items-center min-h-[80vh]">
         <div className="absolute inset-0 w-full h-full lg:w-1/2 bg-[#1b2b1d]"></div>
         <div className="absolute inset-0 w-full h-full lg:w-1/2 lg:left-1/2">
           <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/farm.avif')", filter: "contrast(1.1) saturate(1.2)" }}></div>
@@ -33,22 +33,22 @@ const AboutUs = () => {
             </p>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Floating Stats */}
-      <div className="relative z-20 max-w-6xl mx-auto px-6 -mt-16 lg:-mt-24 mb-32">
+      <section className="relative z-20 max-w-6xl mx-auto px-6 -mt-16 lg:-mt-24 mb-32" aria-label="Company Statistics">
         <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12 border border-gray-100 grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-gray-100">
           {stats.map((stat, i) => (
-            <div key={i} className="text-center px-4">
+            <article key={i} className="text-center px-4">
               <div className="text-3xl lg:text-5xl font-black text-[#263a28] mb-2">{stat.value}</div>
               <div className="text-sm font-semibold tracking-wide text-gray-500 uppercase">{stat.label}</div>
-            </div>
+            </article>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* Zig Zag Content */}
-      <div className="max-w-7xl mx-auto px-6 lg:px-16 space-y-32">
+      <section className="max-w-7xl mx-auto px-6 lg:px-16 space-y-32">
         {/* Section 1 */}
         <div className="flex flex-col lg:flex-row items-center gap-16 group">
           <div className="w-full lg:w-1/2 relative">
@@ -83,8 +83,8 @@ const AboutUs = () => {
             </ul>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 

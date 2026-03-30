@@ -7,7 +7,7 @@ const NewsPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f8fcf8] pb-24 font-serif text-gray-900">
+    <main className="min-h-screen bg-[#f8fcf8] pb-24 font-serif text-gray-900">
       
       {/* Magazine Style Header */}
       <div className="pt-32 pb-10 px-6 lg:px-16 max-w-7xl mx-auto border-b-4 border-[#263a28]">
@@ -29,7 +29,7 @@ const NewsPage = () => {
         <div className="lg:col-span-8 group cursor-pointer">
           <div className="relative h-[60vh] lg:h-[70vh] w-full overflow-hidden mb-6">
             <div className="absolute inset-0 bg-cover bg-center transform group-hover:scale-105 transition-transform duration-1000 saturate-50 group-hover:saturate-100" style={{ backgroundImage: "url('/farm.avif')" }}></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1b2b1d] directly to-transparent opacity-80"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1b2b1d] to-transparent opacity-80"></div>
             
             <div className="absolute bottom-0 left-0 p-8 lg:p-12">
               <span className="font-sans bg-[#f7c35f] text-black text-xs font-bold px-3 py-1 uppercase tracking-widest mb-4 inline-block">Breaking Analysis</span>
@@ -71,7 +71,7 @@ const NewsPage = () => {
           <div className="mt-auto bg-[#1b2b1d] p-8 text-white">
             <h4 className="text-2xl font-bold mb-4">Subscribe to our weekly dispatch.</h4>
             <div className="flex border-b border-white/30 pb-2">
-              <input type="email" placeholder="Email Address" className="bg-transparent border-none outline-none font-sans w-full placeholder-white/50" />
+              <input type="email" aria-label="Email Address" placeholder="Email Address" className="bg-transparent border-none outline-none font-sans w-full placeholder-white/50 focus:ring-0 focus:outline-none" />
               <button className="font-sans font-bold text-[#f7c35f] uppercase text-sm tracking-wider">Join</button>
             </div>
           </div>
@@ -87,7 +87,7 @@ const NewsPage = () => {
       <div className="font-sans">
         <News />
       </div>
-    </div>
+    </main>
   );
 };
 
