@@ -41,6 +41,9 @@ const LoginPage = () => {
 
         console.log('✅ Login successful:', response.data.data.user.name);
 
+        // Notify header about auth change
+        window.dispatchEvent(new Event('authChange'));
+
         // Redirect to home page
         setTimeout(() => {
           setIsAnimating(false);

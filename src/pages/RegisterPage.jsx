@@ -83,6 +83,9 @@ const RegisterPage = () => {
 
         console.log('✅ Registration successful:', response.data.data?.user?.name);
 
+        // Notify header about auth change
+        window.dispatchEvent(new Event('authChange'));
+
         setIsAnimating(false);
         setStep(3);
       }

@@ -1,11 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { AuthToken, AuthUser, AUTH_ENDPOINTS } from '../config/api';
+import axios from 'axios';
 
 const Header = () => {
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeItem, setActiveItem] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const [isHindi, setIsHindi] = useState(false);
+  const [user, setUser] = useState(AuthUser.get());
+  const [isLoggedIn, setIsLoggedIn] = useState(AuthToken.exists());
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // Listen for auth changes (login/register from other pages)
+  useEffect(() => {
+    const checkAuth = () => {
+      setIsLoggedIn(AuthToken.exists());
+      setUser(AuthUser.get());
+    };
+
+    // Check on mount and listen for storage changes
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+    
+    // Custom event for same-tab auth changes
+    window.addEventListener('authChange', checkAuth);
+
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+      window.removeEventListener('authChange', checkAuth);
+    };
+  }, []);
   
   useEffect(() => {
     if (document.cookie.includes('googtrans=/en/hi') || document.cookie.includes('googtrans=/auto/hi')) {
@@ -39,15 +65,54 @@ const Header = () => {
     };
   }, []);
 
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showUserMenu && !e.target.closest('.user-menu-container')) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showUserMenu]);
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(AUTH_ENDPOINTS.LOGOUT, {}, {
+        headers: AuthToken.getHeader()
+      });
+    } catch (err) {
+      // Even if API call fails, clear local data
+      console.warn('Logout API call failed:', err);
+    }
+
+    AuthToken.remove();
+    AuthUser.remove();
+    setUser(null);
+    setIsLoggedIn(false);
+    setShowUserMenu(false);
+    window.dispatchEvent(new Event('authChange'));
+    navigate('/');
+  };
+
   const menuItems = [
     { name: 'Home', icon: '🏠', path: '/' },
     { name: 'About Us', icon: 'ℹ️', path: '/aboutus' },
     { name: 'Our Products', icon: '🌱', path: '/our-products' },
+    { name: 'Marketplace', icon: '🏪', path: '/Marketplace' },
     { name: 'Projects', icon: '📊', path: '/projects' },
     { name: 'Services', icon: '🔧', path: '/services' },
     { name: 'News', icon: '📰', path: '/news' },
     { name: 'Contact Us', icon: '✉️', path: '/contactus' }
   ];
+
+  const getRoleEmoji = (role) => {
+    switch(role) {
+      case 'farmer': return '🌾';
+      case 'admin': return '👑';
+      default: return '🛒';
+    }
+  };
 
   return (
     <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
@@ -113,11 +178,59 @@ const Header = () => {
               <span className="mr-1">🌐</span>
               {isHindi ? 'English' : 'हिंदी'}
             </button>
-            <Link to="/RegisterPage">
-              <button className="bg-green-600 hover:bg-green-500 px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400">
-                Login
-              </button>
-            </Link>
+
+            {isLoggedIn && user ? (
+              <div className="relative user-menu-container">
+                <button 
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300"
+                >
+                  <span>{getRoleEmoji(user.role)}</span>
+                  <span className="max-w-[100px] truncate">{user.name}</span>
+                  <svg className={`w-4 h-4 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50 animate-fadeIn">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-sm font-semibold text-gray-800">{user.name}</p>
+                      <p className="text-xs text-gray-500">{user.email}</p>
+                      <span className="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full capitalize">
+                        {user.role}
+                      </span>
+                    </div>
+                    <Link 
+                      to="/Marketplace" 
+                      onClick={() => setShowUserMenu(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors no-underline"
+                    >
+                      🏪 Marketplace
+                    </Link>
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center"
+                    >
+                      <span className="mr-2">🚪</span> Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Link to="/LoginPage">
+                  <button className="bg-white/20 hover:bg-white/30 px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105">
+                    Login
+                  </button>
+                </Link>
+                <Link to="/RegisterPage">
+                  <button className="bg-green-600 hover:bg-green-500 px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400">
+                    Register
+                  </button>
+                </Link>
+              </div>
+            )}
           </div>
         </nav>
       </div>
@@ -155,11 +268,34 @@ const Header = () => {
               <span className="mr-2">🌐</span>
               {isHindi ? 'Switch to English' : 'हिंदी में बदलें (Translate to Hindi)'}
             </button>
-            <Link to="/RegisterPage" className="block w-full">
-              <button className="w-full bg-green-600 hover:bg-green-500 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400">
-                Login
-              </button>
-            </Link>
+
+            {isLoggedIn && user ? (
+              <>
+                <div className="bg-white/10 rounded-lg p-3 text-center">
+                  <p className="text-sm font-medium">{getRoleEmoji(user.role)} {user.name}</p>
+                  <p className="text-xs text-green-200">{user.email}</p>
+                </div>
+                <button 
+                  onClick={handleLogout}
+                  className="w-full bg-red-500/80 hover:bg-red-500 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:shadow-lg"
+                >
+                  🚪 Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/LoginPage" className="block w-full" onClick={() => setMenuOpen(false)}>
+                  <button className="w-full bg-white/20 hover:bg-white/30 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:shadow-lg">
+                    Login
+                  </button>
+                </Link>
+                <Link to="/RegisterPage" className="block w-full" onClick={() => setMenuOpen(false)}>
+                  <button className="w-full bg-green-600 hover:bg-green-500 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400">
+                    Register
+                  </button>
+                </Link>
+              </>
+            )}
           </li>
         </ul>
       </div>
@@ -168,5 +304,3 @@ const Header = () => {
 };
 
 export default Header;
-
-
