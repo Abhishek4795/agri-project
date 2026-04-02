@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, LogIn, User, Mail, Lock } from 'lucide-react';
-import { Link } from "react-router-dom";
+import { Eye, EyeOff, LogIn, User, Mail, Lock, AlertCircle } from 'lucide-react';
+import { Link, useNavigate } from "react-router-dom";
+import axios from 'axios';
+import { AUTH_ENDPOINTS, AuthToken, AuthUser } from '../config/api';
 
 const LoginPage = () => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -16,16 +20,39 @@ const LoginPage = () => {
       ...formData,
       [name]: value
     });
+    setError(''); // Clear error on input change
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsAnimating(true);
-    // Simulate form submission
-    setTimeout(() => {
+    setError('');
+
+    try {
+      const response = await axios.post(AUTH_ENDPOINTS.LOGIN, {
+        email: formData.email,
+        password: formData.password
+      });
+
+      if (response.data.success) {
+        // Store token and user data
+        AuthToken.set(response.data.data.token);
+        AuthUser.set(response.data.data.user);
+
+        console.log('✅ Login successful:', response.data.data.user.name);
+
+        // Redirect to home page
+        setTimeout(() => {
+          setIsAnimating(false);
+          navigate('/');
+        }, 500);
+      }
+    } catch (err) {
       setIsAnimating(false);
-      console.log('Login data:', formData);
-    }, 1500);
+      const message = err.response?.data?.message || 'Login failed. Please check your credentials.';
+      setError(message);
+      console.error('❌ Login error:', message);
+    }
   };
 
   const togglePasswordVisibility = () => {
@@ -47,6 +74,14 @@ const LoginPage = () => {
             <h2 className="text-2xl font-bold text-smart-yellow">Welcome Back</h2>
             <p className="text-gray-200 mt-1">Login to your account</p>
           </div>
+
+          {/* Error Alert */}
+          {error && (
+            <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-red-700 text-sm">
+              <AlertCircle size={16} className="mr-2 flex-shrink-0" />
+              {error}
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -107,36 +142,34 @@ const LoginPage = () => {
             </div>
 
             {/* Submit Button */}
-            <Link to="/">
-  <button
-    type="submit"
-    className={`w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-white font-medium bg-smart-green hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-smart-yellow transition-all duration-300 ${isAnimating ? 'animate-pulse' : ''}`}
-    disabled={isAnimating}
-  >
-    {isAnimating ? (
-      <span className="flex items-center">
-        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        Logging in...
-      </span>
-    ) : (
-      <span className="flex items-center">
-        <LogIn size={18} className="mr-2" />
-        Login
-      </span>
-    )}
-  </button>
-</Link>
+            <button
+              type="submit"
+              className={`w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-white font-medium bg-smart-green hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-smart-yellow transition-all duration-300 ${isAnimating ? 'animate-pulse' : ''}`}
+              disabled={isAnimating}
+            >
+              {isAnimating ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Logging in...
+                </span>
+              ) : (
+                <span className="flex items-center">
+                  <LogIn size={18} className="mr-2" />
+                  Login
+                </span>
+              )}
+            </button>
 
             {/* Register Option */}
             <div className="text-center mt-4">
               <p className="text-sm text-gray-600">
                 Don't have an account?{" "}
-                <a href="#register" className="text-smart-green font-medium hover:text-smart-yellow transition-colors duration-300">
+                <Link to="/RegisterPage" className="text-smart-green font-medium hover:text-smart-yellow transition-colors duration-300">
                   Register now
-                </a>
+                </Link>
               </p>
             </div>
           </form>

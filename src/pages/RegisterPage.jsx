@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, UserPlus, User, Mail, Lock, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, UserPlus, User, Mail, Lock, CheckCircle, AlertCircle, Phone } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { AUTH_ENDPOINTS, AuthToken, AuthUser } from '../config/api';
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [step, setStep] = useState(1);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
+    role: 'user',
     agreeToTerms: false
   });
 
@@ -20,6 +27,7 @@ const RegisterPage = () => {
       ...formData,
       [name]: type === 'checkbox' ? checked : value
     });
+    setError('');
   };
 
   const nextStep = (e) => {
@@ -40,16 +48,59 @@ const RegisterPage = () => {
     }, 500);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
     setIsAnimating(true);
-    // Simulate form submission
-    setTimeout(() => {
+
+    try {
+      const response = await axios.post(AUTH_ENDPOINTS.REGISTER, {
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        role: formData.role,
+      });
+
+      if (response.data.success) {
+        // Store token and user data (auto-login after register)
+        if (response.data.data?.token) {
+          AuthToken.set(response.data.data.token);
+          AuthUser.set(response.data.data.user);
+        }
+
+        console.log('✅ Registration successful:', response.data.data?.user?.name);
+
+        setIsAnimating(false);
+        setStep(3);
+      }
+    } catch (err) {
       setIsAnimating(false);
-      console.log('Registration data:', formData);
-      // Show success - would typically redirect or show success message
-      setStep(3);
-    }, 1500);
+      const message = err.response?.data?.message || 'Registration failed. Please try again.';
+      const errors = err.response?.data?.errors;
+      
+      if (errors) {
+        // Combine validation errors into single message
+        const errorMessages = Object.values(errors).flat().join('. ');
+        setError(errorMessages);
+      } else {
+        setError(message);
+      }
+      
+      console.error('❌ Registration error:', message);
+    }
   };
 
   return (
@@ -70,88 +121,92 @@ const RegisterPage = () => {
             {/* Progress Steps */}
             <div className="flex justify-center mt-4">
               <div className="flex items-center w-3/4">
-                {/* Step 1 */}
                 <div className={`flex flex-col items-center ${step >= 1 ? 'text-smart-yellow' : 'text-gray-400'}`}>
-                  <div className={`rounded-full h-8 w-8 flex items-center justify-center border-2 ${step >= 1 ? 'border-smart-yellow bg-smart-yellow bg-opacity-20' : 'border-gray-400'}`}>
-                    1
-                  </div>
+                  <div className={`rounded-full h-8 w-8 flex items-center justify-center border-2 ${step >= 1 ? 'border-smart-yellow bg-smart-yellow bg-opacity-20' : 'border-gray-400'}`}>1</div>
                   <div className="text-xs mt-1">Account</div>
                 </div>
-                
-                {/* Line */}
                 <div className={`flex-1 h-1 mx-2 ${step >= 2 ? 'bg-smart-yellow' : 'bg-gray-300'}`}></div>
-                
-                {/* Step 2 */}
                 <div className={`flex flex-col items-center ${step >= 2 ? 'text-smart-yellow' : 'text-gray-400'}`}>
-                  <div className={`rounded-full h-8 w-8 flex items-center justify-center border-2 ${step >= 2 ? 'border-smart-yellow bg-smart-yellow bg-opacity-20' : 'border-gray-400'}`}>
-                    2
-                  </div>
+                  <div className={`rounded-full h-8 w-8 flex items-center justify-center border-2 ${step >= 2 ? 'border-smart-yellow bg-smart-yellow bg-opacity-20' : 'border-gray-400'}`}>2</div>
                   <div className="text-xs mt-1">Security</div>
                 </div>
-                
-                {/* Line */}
                 <div className={`flex-1 h-1 mx-2 ${step >= 3 ? 'bg-smart-yellow' : 'bg-gray-300'}`}></div>
-                
-                {/* Step 3 */}
                 <div className={`flex flex-col items-center ${step >= 3 ? 'text-smart-yellow' : 'text-gray-400'}`}>
-                  <div className={`rounded-full h-8 w-8 flex items-center justify-center border-2 ${step >= 3 ? 'border-smart-yellow bg-smart-yellow bg-opacity-20' : 'border-gray-400'}`}>
-                    3
-                  </div>
+                  <div className={`rounded-full h-8 w-8 flex items-center justify-center border-2 ${step >= 3 ? 'border-smart-yellow bg-smart-yellow bg-opacity-20' : 'border-gray-400'}`}>3</div>
                   <div className="text-xs mt-1">Done</div>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Error Alert */}
+          {error && (
+            <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-start text-red-700 text-sm">
+              <AlertCircle size={16} className="mr-2 mt-0.5 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
           {/* Form */}
           <div className={`p-6 space-y-6 ${step === 3 ? 'text-center' : ''}`}>
             {step === 1 && (
               <form onSubmit={nextStep} className="space-y-6">
-                {/* Full Name Field */}
+                {/* Full Name */}
                 <div className="space-y-2">
                   <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">Full Name</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <User size={18} className="text-gray-400" />
                     </div>
-                    <input
-                      type="text"
-                      id="fullName"
-                      name="fullName"
-                      value={formData.fullName}
-                      onChange={handleChange}
+                    <input type="text" id="fullName" name="fullName" value={formData.fullName} onChange={handleChange}
                       className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-smart-yellow focus:border-transparent transition-all duration-300"
-                      placeholder="John Doe"
-                      required
-                    />
+                      placeholder="John Doe" required />
                   </div>
                 </div>
 
-                {/* Email Field */}
+                {/* Email */}
                 <div className="space-y-2">
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Mail size={18} className="text-gray-400" />
                     </div>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
+                    <input type="email" id="email" name="email" value={formData.email} onChange={handleChange}
                       className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-smart-yellow focus:border-transparent transition-all duration-300"
-                      placeholder="your@email.com"
-                      required
-                    />
+                      placeholder="your@email.com" required />
                   </div>
                 </div>
 
-                {/* Next Button */}
-                <button
-                  type="submit"
-                  className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white font-medium bg-smart-green hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-smart-yellow transition-all duration-300"
-                >
+                {/* Phone */}
+                <div className="space-y-2">
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone Number</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Phone size={18} className="text-gray-400" />
+                    </div>
+                    <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange}
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-smart-yellow focus:border-transparent transition-all duration-300"
+                      placeholder="9876543210" />
+                  </div>
+                </div>
+
+                {/* Role Selection */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">I am a</label>
+                  <div className="flex space-x-4">
+                    <label className={`flex-1 flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all ${formData.role === 'user' ? 'border-smart-green bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <input type="radio" name="role" value="user" checked={formData.role === 'user'} onChange={handleChange} className="hidden" />
+                      <span className="text-sm font-medium">🛒 Buyer</span>
+                    </label>
+                    <label className={`flex-1 flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all ${formData.role === 'farmer' ? 'border-smart-green bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <input type="radio" name="role" value="farmer" checked={formData.role === 'farmer'} onChange={handleChange} className="hidden" />
+                      <span className="text-sm font-medium">🌾 Farmer</span>
+                    </label>
+                  </div>
+                </div>
+
+                <button type="submit"
+                  className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white font-medium bg-smart-green hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-smart-yellow transition-all duration-300">
                   Continue
                 </button>
               </form>
@@ -159,76 +214,47 @@ const RegisterPage = () => {
 
             {step === 2 && (
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Password Field */}
+                {/* Password */}
                 <div className="space-y-2">
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Lock size={18} className="text-gray-400" />
                     </div>
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      id="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
+                    <input type={showPassword ? "text" : "password"} id="password" name="password" value={formData.password} onChange={handleChange}
                       className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-smart-yellow focus:border-transparent transition-all duration-300"
-                      placeholder="••••••••"
-                      required
-                    />
+                      placeholder="••••••••" required minLength={6} />
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                      >
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-400 hover:text-gray-600 focus:outline-none">
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
                   </div>
                 </div>
 
-                {/* Confirm Password Field */}
+                {/* Confirm Password */}
                 <div className="space-y-2">
                   <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirm Password</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Lock size={18} className="text-gray-400" />
                     </div>
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
+                    <input type={showConfirmPassword ? "text" : "password"} id="confirmPassword" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange}
                       className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-smart-yellow focus:border-transparent transition-all duration-300"
-                      placeholder="••••••••"
-                      required
-                    />
+                      placeholder="••••••••" required />
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                      >
+                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="text-gray-400 hover:text-gray-600 focus:outline-none">
                         {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
                   </div>
                 </div>
 
-                {/* Terms and Conditions */}
+                {/* Terms */}
                 <div className="flex items-start">
                   <div className="flex items-center h-5">
-                    <input
-                      id="agreeToTerms"
-                      name="agreeToTerms"
-                      type="checkbox"
-                      checked={formData.agreeToTerms}
-                      onChange={handleChange}
-                      className="h-4 w-4 text-smart-green focus:ring-smart-yellow border-gray-300 rounded"
-                      required
-                    />
+                    <input id="agreeToTerms" name="agreeToTerms" type="checkbox" checked={formData.agreeToTerms} onChange={handleChange}
+                      className="h-4 w-4 text-smart-green focus:ring-smart-yellow border-gray-300 rounded" required />
                   </div>
                   <div className="ml-3 text-sm">
                     <label htmlFor="agreeToTerms" className="text-gray-600">
@@ -239,18 +265,12 @@ const RegisterPage = () => {
 
                 {/* Buttons */}
                 <div className="flex space-x-4">
-                  <button
-                    type="button"
-                    onClick={prevStep}
-                    className="w-full py-2 px-4 border border-gray-300 rounded-md shadow-sm text-gray-700 font-medium bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-smart-yellow transition-all duration-300"
-                  >
+                  <button type="button" onClick={prevStep}
+                    className="w-full py-2 px-4 border border-gray-300 rounded-md shadow-sm text-gray-700 font-medium bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-smart-yellow transition-all duration-300">
                     Back
                   </button>
-                  <button
-                    type="submit"
-                    className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white font-medium bg-smart-green hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-smart-yellow transition-all duration-300 ${isAnimating ? 'animate-pulse' : ''}`}
-                    disabled={isAnimating}
-                  >
+                  <button type="submit" disabled={isAnimating}
+                    className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white font-medium bg-smart-green hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-smart-yellow transition-all duration-300 ${isAnimating ? 'animate-pulse' : ''}`}>
                     {isAnimating ? (
                       <span className="flex items-center justify-center">
                         <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -274,13 +294,13 @@ const RegisterPage = () => {
                 </div>
                 <h3 className="text-xl font-bold text-gray-800 mb-2">Registration Successful!</h3>
                 <p className="text-gray-600 mb-6">Your account has been created successfully.</p>
-                <p className="text-gray-500 mb-8">A confirmation email has been sent to <span className="font-medium">{formData.email}</span></p>
-                <a
-                  href="/LoginPage"
+                <p className="text-gray-500 mb-8">Welcome aboard, <span className="font-medium">{formData.fullName}</span>!</p>
+                <button
+                  onClick={() => navigate('/')}
                   className="py-2 px-6 bg-smart-green text-white rounded-md shadow-sm hover:bg-opacity-90 transition-all duration-300"
                 >
-                  Proceed to Login
-                </a>
+                  Go to Dashboard
+                </button>
               </div>
             )}
           </div>
@@ -296,9 +316,9 @@ const RegisterPage = () => {
           <div className="text-center mt-6">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
-              <a href="/LoginPage" className="text-smart-green font-medium hover:text-smart-yellow transition-colors duration-300">
+              <Link to="/LoginPage" className="text-smart-green font-medium hover:text-smart-yellow transition-colors duration-300">
                 Login here
-              </a>
+              </Link>
             </p>
           </div>
         )}
