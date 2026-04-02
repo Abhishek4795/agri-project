@@ -21,7 +21,7 @@ const AboutUs = () => {
           <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/farm.avif')", filter: "contrast(1.1) saturate(1.2)" }}></div>
           <div className="absolute inset-0 bg-gradient-to-l from-transparent via-[#1b2b1d]/50 to-[#1b2b1d] lg:via-[#1b2b1d]/80"></div>
         </div>
-        
+
         <div className="relative z-10 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="text-left text-white pr-0 lg:pr-12">
             <h4 className="text-[#f7c35f] font-bold tracking-widest uppercase mb-4 text-sm">Who We Are</h4>
